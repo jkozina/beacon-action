@@ -32,7 +32,13 @@ def main() -> int:
 
     verdict = call_pdp(beacon_url, derived, impl_ctx)
 
+    # Intent name becomes the artifact filename; reject anything that could
+    # traverse outside out_dir. The extractor produces safe names today but
+    # this CLI runs on PR-controlled input under action.yml.
     name = derived["metadata"]["name"]
+    if "/" in name or "\\" in name or ".." in name or name.startswith(".") or not name:
+        raise ValueError(f"unsafe intent name: {name!r}")
+
     (out_dir / "derived-intents").mkdir(exist_ok=True)
     (out_dir / "verdicts").mkdir(exist_ok=True)
     (out_dir / "canonical").mkdir(exist_ok=True)
