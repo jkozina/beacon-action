@@ -31,18 +31,22 @@ def post(pr_number: int, body: str) -> None:
     marker = "<!-- beacon-verdict-comment -->"
     body_with_marker = f"{marker}\n{body}"
 
+    # Look up via REST API so the returned `.id` is the numeric REST id the
+    # PATCH endpoint requires. (gh pr view returns the GraphQL node id, which
+    # PATCH /repos/.../issues/comments/{id} 404s on.)
+    repo = os.environ["GITHUB_REPOSITORY"]
     existing = subprocess.run(
-        ["gh", "pr", "view", str(pr_number), "--json", "comments", "--jq",
-         f'.comments[] | select(.body | startswith("{marker}")) | .id'],
+        ["gh", "api", f"/repos/{repo}/issues/{pr_number}/comments", "--paginate",
+         "--jq", f'.[] | select(.body | startswith("{marker}")) | .id'],
         capture_output=True, text=True, check=False,
     )
-    existing_id = existing.stdout.strip()
+    # Multiple matches shouldn't happen, but take the first defensively.
+    existing_id = existing.stdout.splitlines()[0].strip() if existing.stdout.strip() else ""
 
     if existing_id:
-        # gh doesn't directly support editing PR comments; use the API
         subprocess.run(
             ["gh", "api", "-X", "PATCH",
-             f"/repos/{os.environ['GITHUB_REPOSITORY']}/issues/comments/{existing_id}",
+             f"/repos/{repo}/issues/comments/{existing_id}",
              "-f", f"body={body_with_marker}"],
             check=True,
         )
