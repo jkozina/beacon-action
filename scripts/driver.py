@@ -75,6 +75,15 @@ def main() -> int:
                 "implementationFiles": [str(p) for p in files],
             }
             verdict = call_pdp(beacon_url, derived, impl_ctx)
+            from scripts.verify_signature import verify_verdict
+            if not verify_verdict(verdict):
+                body = (
+                    "### Beacon Connectivity Verdict — System Error\n\n"
+                    "Verdict signature failed verification. This check fails closed.\n\n"
+                    f"Decision ID (unverified): `{verdict.get('decisionId', '?')}`"
+                )
+                post(pr_number, body)
+                return 1
             write_evidence(out_dir, derived["metadata"]["name"], derived, verdict)
             post(pr_number, render(verdict))
             if not verdict["allow"]:
