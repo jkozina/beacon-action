@@ -1,0 +1,64 @@
+apiVersion: network.company.com/v1
+kind: NetworkIntent
+metadata:
+  name: {{ intent_name }}
+  namespace: {{ source.namespace }}
+  labels:
+    network.company.com/central-id: {{ source.centralId }}
+    network.company.com/environment: {{ source.environment }}
+    network.company.com/tenant: {{ source.tenant }}
+  annotations:
+    network.company.com/decision-id: {{ verdict.decisionId }}
+
+spec:
+  source:
+    workloadId: {{ source.workloadId }}
+    centralId: {{ source.centralId }}
+    namespace: {{ source.namespace }}
+    serviceAccount: {{ source.serviceAccount }}
+    environment: {{ source.environment }}
+    tenant: {{ source.tenant }}
+
+  destination:
+    requestedFqdn: {{ destination.requestedFqdn }}
+    canonicalFqdn: {{ destination.canonicalFqdn }}
+    serviceId: {{ destination.serviceId }}
+
+  traffic:
+    direction: egress
+    protocol: {{ traffic.protocol }}
+    port: {{ traffic.port }}
+    applicationProtocol: {{ traffic.applicationProtocol }}
+    sni: {{ destination.requestedFqdn }}
+    tlsRequired: true
+
+  purpose:
+    businessJustification: {{ purpose.businessJustification }}
+    ticket: {{ purpose.ticket }}
+    requestedBy: {{ actor }}
+    dataTypes: []
+
+  lifecycle:
+    requestedTtlDays: {{ lifecycle.requestedTtlDays }}
+    maxAllowedTtlDays: {{ lifecycle.requestedTtlDays }}
+    expiresAt: "{{ verdict.expiresAt }}"
+
+  approval:
+    decisionId: {{ verdict.decisionId }}
+    allow: true
+    policyBundle: {{ verdict.policyBundle }}
+    evaluatedAt: "{{ verdict.evaluatedAt }}"
+    expiresAt: "{{ verdict.expiresAt }}"
+    controls:{% if controls.primary %}
+      primary:
+        type: {{ controls.primary.type }}
+        owner: {{ controls.primary.owner }}
+        target: {{ controls.primary.target }}{% endif %}{% if controls.transitive %}
+      transitive:{% for t in controls.transitive %}
+        - type: {{ t.type }}
+          owner: {{ t.owner }}
+          target: {{ t.target }}{% endfor %}{% endif %}
+    matchedRules:{% for r in verdict.matchedRules %}
+      - {{ r }}{% endfor %}
+    metadataSnapshotHash: {{ verdict.metadataSnapshotHash }}
+    signature: {{ verdict.signature }}

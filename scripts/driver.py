@@ -86,6 +86,14 @@ def main() -> int:
                 return 1
             write_evidence(out_dir, derived["metadata"]["name"], derived, verdict)
             post(pr_number, render(verdict))
+            if verdict["allow"]:
+                # Write back approved NetworkIntent to PR branch.
+                from scripts.write_back import render as render_writeback, commit_and_push
+                intent_name, body = render_writeback(verdict, os.environ.get("GITHUB_ACTOR", "beacon"))
+                out_path = Path(".beacon/approvals") / f"{intent_name}.yaml"
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(body)
+                commit_and_push(out_path, verdict["decisionId"])
             if not verdict["allow"]:
                 overall_allow = False
 
