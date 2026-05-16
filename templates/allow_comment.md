@@ -18,4 +18,4 @@
 {% for r in verdict.matchedRules %}- `{{ r }}`
 {% endfor %}
 
-{% endif %}Evidence artifacts: derived-intent · enrichment-snapshot · canonical-request · signed verdict. See workflow artifacts.
+{% endif %}Evidence artifacts: derived-intent · enrichment-snapshot · signed verdict. See workflow artifacts.

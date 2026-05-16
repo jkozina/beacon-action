@@ -41,13 +41,15 @@ def main() -> int:
 
     (out_dir / "derived-intents").mkdir(exist_ok=True)
     (out_dir / "verdicts").mkdir(exist_ok=True)
-    (out_dir / "canonical").mkdir(exist_ok=True)
     (out_dir / "enrichment").mkdir(exist_ok=True)
     (out_dir / "extraction").mkdir(exist_ok=True)
 
+    # canonical-request stays inside the verdict envelope (verdict["canonicalRequest"]);
+    # it's omitted as a standalone file because in this POC its bytes are
+    # entirely covered by enrichment + derived. Revisit if the enricher
+    # grows non-trivial computed logic that isn't in enrichment.
     (out_dir / "derived-intents" / f"{name}.json").write_text(json.dumps(derived, indent=2))
     (out_dir / "verdicts" / f"{name}.json").write_text(json.dumps(verdict, indent=2))
-    (out_dir / "canonical" / f"{name}.json").write_text(json.dumps(verdict.get("canonicalRequest", {}), indent=2))
     (out_dir / "enrichment" / f"{name}.json").write_text(json.dumps(verdict.get("enrichmentSnapshot", {}), indent=2))
     (out_dir / "extraction" / f"{name}.json").write_text(json.dumps({"status": "ok", "name": name}, indent=2))
 
