@@ -1,0 +1,36 @@
+name: Beacon Connectivity Verdict
+description: Extracts intent from implementation config, calls Beacon, posts PR feedback.
+inputs:
+  beacon-url:
+    description: URL of the Beacon API (e.g. http://localhost:8181)
+    required: true
+  implementation-paths:
+    description: Comma-separated path prefixes to scan for implementation files (e.g. "charts,terraform,k8s")
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install action dependencies
+      shell: bash
+      run: pip install -r "${{ github.action_path }}/requirements.txt"
+    - name: Run Beacon verdict
+      shell: bash
+      env:
+        BEACON_URL: ${{ inputs.beacon-url }}
+        IMPLEMENTATION_PATHS: ${{ inputs.implementation-paths }}
+        BEACON_PR_NUMBER: ${{ github.event.pull_request.number }}
+        BEACON_OUT_DIR: .beacon
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        cd "${{ github.workspace }}"
+        PYTHONPATH="${{ github.action_path }}" python -m scripts.driver
+    - name: Upload Beacon evidence artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: beacon-evidence
+        path: ${{ github.workspace }}/.beacon
