@@ -24,11 +24,14 @@ def changed_implementation_files(impl_paths: list[str]) -> list[Path]:
 
 
 def write_evidence(out_dir: Path, name: str, derived: dict, verdict: dict) -> None:
-    for sub in ("derived-intents", "verdicts", "canonical", "enrichment", "extraction"):
+    # Note: canonical-request is intentionally NOT written as a separate file.
+    # It lives in verdict["canonicalRequest"] (self-contained envelope) and in
+    # this POC every other byte of it duplicates enrichment + derived. If/when
+    # the enricher grows non-trivial computed logic, revisit.
+    for sub in ("derived-intents", "verdicts", "enrichment", "extraction"):
         (out_dir / sub).mkdir(parents=True, exist_ok=True)
     (out_dir / "derived-intents" / f"{name}.json").write_text(json.dumps(derived, indent=2))
     (out_dir / "verdicts" / f"{name}.json").write_text(json.dumps(verdict, indent=2))
-    (out_dir / "canonical" / f"{name}.json").write_text(json.dumps(verdict["canonicalRequest"], indent=2))
     (out_dir / "enrichment" / f"{name}.json").write_text(json.dumps(verdict["enrichmentSnapshot"], indent=2))
     (out_dir / "extraction" / f"{name}.json").write_text(json.dumps({"status": "ok", "name": name}, indent=2))
 
