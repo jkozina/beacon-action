@@ -14,8 +14,6 @@ def extract_from_helm_values(values_path: Path, source_ctx: dict) -> list[dict]:
     """Walk egress.allow[]; return one derived NetworkIntent per entry. Fail closed on unsupported shapes."""
     data = yaml.safe_load(values_path.read_text()) or {}
     allows = (data.get("egress") or {}).get("allow") or []
-    if not allows:
-        raise ExtractionError(f"No egress.allow entries found in {values_path}")
 
     intents = []
     for idx, entry in enumerate(allows):

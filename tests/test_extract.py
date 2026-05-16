@@ -26,6 +26,16 @@ def test_extract_one_egress_allow(tmp_path: Path):
     assert i["spec"]["lifecycle"]["requestedTtlDays"] == 30
 
 
+def test_extract_no_egress_returns_empty(tmp_path: Path):
+    # Workloads with no external egress (internal-only services, batch jobs)
+    # produce zero derived intents — not an error. The caller decides whether
+    # zero intents is meaningful for its flow.
+    f = tmp_path / "values.yaml"
+    f.write_text("replicaCount: 1\n")
+    source_ctx = {"workloadId": "orders-api", "namespace": "orders", "serviceAccount": "orders-api"}
+    assert extract_from_helm_values(f, source_ctx) == []
+
+
 def test_extract_wildcard_host_fails(tmp_path: Path):
     f = tmp_path / "values.yaml"
     f.write_text(textwrap.dedent("""
