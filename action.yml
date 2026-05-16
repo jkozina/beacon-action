@@ -34,3 +34,5 @@ runs:
       with:
         name: beacon-evidence
         path: ${{ github.workspace }}/.beacon
+        include-hidden-files: true   # .beacon/ leads with a dot; v4 skips its contents otherwise
+        if-no-files-found: error      # missing evidence means the driver malfunctioned
