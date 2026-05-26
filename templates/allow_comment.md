@@ -18,4 +18,6 @@
 {% for r in verdict.matchedRules %}- `{{ r }}`
 {% endfor %}
 
-{% endif %}Evidence artifacts: derived-intent · enrichment-snapshot · signed verdict. See workflow artifacts.
+{% endif %}**Evidence artifacts** (signed verdict + derived intent + enrichment snapshot): attached to this workflow run as `beacon-evidence`.
+
+**Durable approval record**: `.beacon/approvals/{{ verdict.canonicalRequest.metadata.name }}.yaml` will be committed to `main` automatically when this PR merges.

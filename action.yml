@@ -1,5 +1,5 @@
 name: Beacon Connectivity Verdict
-description: Extracts intent from implementation config, calls Beacon, posts PR feedback.
+description: PR-time evaluation (mode=evaluate) or post-merge approval record (mode=record-approval).
 inputs:
   beacon-url:
     description: URL of the Beacon API (e.g. http://localhost:8181)
@@ -7,6 +7,10 @@ inputs:
   implementation-paths:
     description: Comma-separated path prefixes to scan for implementation files (e.g. "charts,terraform,k8s")
     required: true
+  mode:
+    description: 'evaluate (default, PR-time) or record-approval (post-merge)'
+    required: false
+    default: evaluate
 runs:
   using: composite
   steps:
@@ -17,7 +21,8 @@ runs:
     - name: Install action dependencies
       shell: bash
       run: pip install -r "${{ github.action_path }}/requirements.txt"
-    - name: Run Beacon verdict
+    - name: Run Beacon (evaluate)
+      if: inputs.mode == 'evaluate'
       shell: bash
       env:
         BEACON_URL: ${{ inputs.beacon-url }}
@@ -29,10 +34,21 @@ runs:
         cd "${{ github.workspace }}"
         PYTHONPATH="${{ github.action_path }}" python -m scripts.driver
     - name: Upload Beacon evidence artifact
-      if: always()
+      if: inputs.mode == 'evaluate' && always()
       uses: actions/upload-artifact@v4
       with:
         name: beacon-evidence
         path: ${{ github.workspace }}/.beacon
         include-hidden-files: true   # .beacon/ leads with a dot; v4 skips its contents otherwise
         if-no-files-found: error      # missing evidence means the driver malfunctioned
+    - name: Run Beacon (record-approval)
+      if: inputs.mode == 'record-approval'
+      shell: bash
+      env:
+        BEACON_URL: ${{ inputs.beacon-url }}
+        IMPLEMENTATION_PATHS: ${{ inputs.implementation-paths }}
+        BEACON_PR_NUMBER: ${{ github.event.pull_request.number }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        cd "${{ github.workspace }}"
+        PYTHONPATH="${{ github.action_path }}" python -m scripts.record_approval
